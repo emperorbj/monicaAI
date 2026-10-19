@@ -1,0 +1,22 @@
+# --- Secrets: never commit real credentials ---
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Node / Next.js (admin app, Module 4) ---
+node_modules/
+.next/
+
+# --- Editors and OS ---
+.vscode/
+.idea/
+.DS_Store
