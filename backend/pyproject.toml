@@ -1,0 +1,28 @@
+[project]
+name = "health-navigator-backend"
+version = "0.1.0"
+description = "Backend for the AI Health Service Navigator Nigeria (FastAPI, LangGraph, NeonDB)"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+# ---------- Ruff: one tool for formatting AND linting ----------
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+# E/F = classic errors and unused names, I = sorted imports,
+# B = common bug patterns, UP = use modern Python syntax
+select = ["E", "F", "I", "B", "UP"]
+
+# ---------- pytest ----------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Lets tests write `from app.config import ...` without installing the project as a package
+pythonpath = ["."]
