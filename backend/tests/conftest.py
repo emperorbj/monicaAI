@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from functools import cache
 
 import pytest
+from fastapi.testclient import TestClient
 from pydantic import ValidationError
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
@@ -59,6 +60,24 @@ def db_session() -> Iterator[Session]:
     """A fresh rolled-back session for ONE test. Use for tests that write data."""
     with _rolled_back_session() as session:
         yield session
+
+
+@pytest.fixture
+def api_client(db_session: Session) -> Iterator[TestClient]:
+    """Calls the real app in memory, with every request using the rolled-back db_session.
+
+    dependency_overrides swaps get_session for our test session: endpoints don't change,
+    but nothing they write survives the test.
+    """
+    from app.api.deps import get_session
+    from app.main import create_app
+
+    app = create_app()
+    app.dependency_overrides[get_session] = lambda: db_session
+    # raise_server_exceptions=False: return the 500 response like a real server would,
+    # instead of re-raising the error inside the test.
+    with TestClient(app, raise_server_exceptions=False) as client:
+        yield client
 
 
 @pytest.fixture(scope="module")

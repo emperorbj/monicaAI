@@ -5,6 +5,7 @@ description = "Backend for the AI Health Service Navigator Nigeria (FastAPI, Lan
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.20.0",
+    "fastapi[standard]>=0.152.0",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.16.0",
     "sqlalchemy>=2.1.5",
