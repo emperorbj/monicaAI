@@ -1,6 +1,6 @@
 """Integration tests: search_facilities() against the seeded demo data (rolled back after).
 
-The expected answers below come straight from seed/demo_data.py.
+The expected answers below come straight from seed/demo_data/ (mostly oyo.py).
 """
 
 import uuid
@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Facility, Lga
+from app.models import Facility, Lga, State
 from app.models.enums import AvailabilityStatus
 from app.services.facility_service import (
     UnknownLgaError,
@@ -20,13 +20,18 @@ from app.services.facility_service import (
 pytestmark = pytest.mark.integration
 
 
-def _lga_id(session: Session, name: str) -> int:
-    return session.scalars(select(Lga.id).where(Lga.name == name)).one()
+def _lga_id(session: Session, name: str, state_code: str = "OY") -> uuid.UUID:
+    # The state is needed too: some LGA names (e.g. Surulere) exist in more than one state.
+    return session.scalars(
+        select(Lga.id).join(Lga.state).where(Lga.name == name, State.code == state_code)
+    ).one()
 
 
-def _demo_matches(session: Session, service_code: str, lga_name: str = "Ibadan North"):
+def _demo_matches(
+    session: Session, service_code: str, lga_name: str = "Ibadan North", state_code: str = "OY"
+):
     """Search, keeping only demo results (so real data added later can't break these tests)."""
-    result = search_facilities(session, service_code, _lga_id(session, lga_name))
+    result = search_facilities(session, service_code, _lga_id(session, lga_name, state_code))
     return result, [match for match in result.facilities if match.is_demo]
 
 
@@ -96,6 +101,31 @@ def test_lga_without_facilities_returns_an_empty_list(seeded_session: Session) -
 
     assert matches == []
     assert result.lga.name == "Ibadan North-West"  # the search itself was valid
+
+
+def test_same_lga_name_in_two_states_gives_different_results(seeded_session: Session) -> None:
+    lagos_result, lagos_matches = _demo_matches(
+        seeded_session, "malaria_testing", "Surulere", state_code="LA"
+    )
+    oyo_result, oyo_matches = _demo_matches(
+        seeded_session, "malaria_testing", "Surulere", state_code="OY"
+    )
+
+    assert lagos_result.lga.state_name == "Lagos"
+    assert [m.name for m in lagos_matches] == ["Demo Bluebell Health Post"]
+    assert oyo_result.lga.state_name == "Oyo"
+    assert oyo_matches == []  # Surulere in Oyo has no demo facilities
+
+
+def test_search_in_another_state_stays_in_that_lga(seeded_session: Session) -> None:
+    result, matches = _demo_matches(
+        seeded_session, "antenatal_care", "Abuja Municipal", state_code="FC"
+    )
+
+    # The Capital CHC is in the same LGA but doesn't offer antenatal care.
+    assert [m.name for m in matches] == ["Demo Unity Gardens Primary Health Centre"]
+    assert matches[0].contact.full_name == "Ifeoma Sketch (Demo)"  # the antenatal lead
+    assert result.lga.state_name == "Federal Capital Territory"
 
 
 def test_every_result_is_labelled_demo(seeded_session: Session) -> None:

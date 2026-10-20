@@ -1,8 +1,4 @@
-"""Run the real seed against Neon (inside a rolled-back transaction) and check the result.
-
-Slow (~2 minutes): it runs the whole seed twice over the network. Skip it with
-`-m "not integration"` while working on something else.
-"""
+"""Run the real seed against Neon (inside a rolled-back transaction) and check the result."""
 
 import pytest
 from sqlalchemy import func, select
@@ -14,6 +10,7 @@ from app.models import (
     FacilityService,
     Lga,
     ServiceSchedule,
+    State,
 )
 from app.models.enums import VerificationStatus
 from seed import demo_data
@@ -41,12 +38,16 @@ def test_seed_is_idempotent_and_marks_everything_as_demo(db_session: Session) ->
     assert sum(second_report.created.values()) == 0
     assert _row_counts(db_session) == counts_after_first_run
 
-    # 2. Every seeded facility exists, in the pilot LGA.
-    pilot_facilities = db_session.scalars(
-        select(Facility).join(Lga).where(Lga.name == demo_data.PILOT_LGA_NAME)
-    ).all()
-    seeded_names = {f["name"] for f in demo_data.FACILITIES}
-    assert seeded_names <= {facility.name for facility in pilot_facilities}
+    # 2. Every facility exists in the right state AND LGA (Surulere exists in two states).
+    stored = set(
+        db_session.execute(
+            select(State.code, Lga.name, Facility.name).join(Lga.state).join(Lga.facilities)
+        ).all()
+    )
+    for state in demo_data.STATES:
+        for lga in state["lgas"]:
+            for facility in lga["facilities"]:
+                assert (state["code"], lga["name"], facility["name"]) in stored
 
     # 3. Demo rows are flagged and never verified.
     for model in DEMO_TABLES:
