@@ -3,7 +3,9 @@ name = "health-navigator-backend"
 version = "0.1.0"
 description = "Backend for the AI Health Service Navigator Nigeria (FastAPI, LangGraph, NeonDB)"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pydantic-settings>=2.16.0",
+]
 
 [dependency-groups]
 dev = [
