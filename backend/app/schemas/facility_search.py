@@ -5,6 +5,7 @@ and carry every status and demo flag the bot needs to be honest about what it sa
 frozen=True makes results read-only, so no caller can quietly change a fact after the search.
 """
 
+import uuid
 from datetime import datetime
 from decimal import Decimal
 
@@ -16,7 +17,7 @@ from app.models.enums import AvailabilityStatus, FacilityType, VerificationStatu
 class ContactInfo(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    contact_id: int
+    contact_id: uuid.UUID
     full_name: str
     role_title: str
     phone: str | None
@@ -30,7 +31,7 @@ class ContactInfo(BaseModel):
 class FacilityMatch(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    facility_id: int
+    facility_id: uuid.UUID
     name: str
     facility_type: FacilityType
     address: str | None
@@ -59,7 +60,7 @@ class ServiceSummary(BaseModel):
 class LgaSummary(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    lga_id: int
+    lga_id: uuid.UUID
     name: str
     state_name: str
 

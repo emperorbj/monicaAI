@@ -6,7 +6,7 @@ Definition-level checks (no database). In Step 5 we prove the same rules against
 import re
 
 import pytest
-from sqlalchemy import CheckConstraint, Enum, UniqueConstraint
+from sqlalchemy import CheckConstraint, Enum, UniqueConstraint, Uuid
 from sqlalchemy.orm import configure_mappers
 
 from app.models import (
@@ -51,6 +51,20 @@ def test_all_nine_tables_are_registered() -> None:
         "service_schedules",
         "verification_history",
     }
+
+
+def test_every_table_uses_a_database_generated_uuidv7_primary_key() -> None:
+    for table in Base.metadata.tables.values():
+        (primary_key,) = table.primary_key.columns
+        assert isinstance(primary_key.type, Uuid), table.name
+        assert "uuidv7" in str(primary_key.server_default.arg), table.name
+
+
+def test_every_foreign_key_column_is_a_uuid() -> None:
+    for table in Base.metadata.tables.values():
+        for column in table.columns:
+            if column.foreign_keys:
+                assert isinstance(column.type, Uuid), f"{table.name}.{column.name}"
 
 
 def test_every_enum_column_has_exactly_one_explicit_check() -> None:

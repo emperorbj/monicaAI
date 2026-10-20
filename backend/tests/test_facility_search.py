@@ -3,6 +3,8 @@
 The expected answers below come straight from seed/demo_data.py.
 """
 
+import uuid
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -113,7 +115,8 @@ def test_unknown_service_code_raises(seeded_session: Session) -> None:
 
 def test_unknown_lga_raises(seeded_session: Session) -> None:
     with pytest.raises(UnknownLgaError):
-        search_facilities(seeded_session, "antenatal_care", lga_id=-1)
+        # A random UUID that no LGA has.
+        search_facilities(seeded_session, "antenatal_care", lga_id=uuid.uuid4())
 
 
 def test_deactivated_facility_is_excluded(db_session: Session) -> None:

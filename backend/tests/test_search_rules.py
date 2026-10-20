@@ -1,5 +1,6 @@
 """Unit tests for the contact-choice and ordering rules (pure Python, no database)."""
 
+import uuid
 from decimal import Decimal
 
 from app.models import FacilityContact
@@ -7,18 +8,18 @@ from app.models.enums import AvailabilityStatus, FacilityType, VerificationStatu
 from app.schemas.facility_search import FacilityMatch
 from app.services.facility_service import result_sort_key, select_contact
 
-ANTENATAL_ID = 1
-VACCINATION_ID = 2
+ANTENATAL_ID = uuid.uuid4()
+VACCINATION_ID = uuid.uuid4()
 
 
-def _contact(name: str, service_id: int | None = None, **fields) -> FacilityContact:
+def _contact(name: str, service_id: uuid.UUID | None = None, **fields) -> FacilityContact:
     defaults = {"is_active": True, "is_primary": False, "display_order": 0}
     return FacilityContact(full_name=name, service_id=service_id, **{**defaults, **fields})
 
 
 def _match(name: str, availability: str, status: str) -> FacilityMatch:
     return FacilityMatch(
-        facility_id=1,
+        facility_id=uuid.uuid4(),
         name=name,
         facility_type=FacilityType.PRIMARY_HEALTH_CENTRE,
         address=None,

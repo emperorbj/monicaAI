@@ -1,5 +1,6 @@
 """Health facilities: identity, location, and how trustworthy that information is."""
 
+import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -18,7 +19,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base, TimestampMixin
+from app.models.base import Base, TimestampMixin, uuid_primary_key
 from app.models.catalog import DataSource
 from app.models.enums import FacilityType, VerificationStatus, enum_check, enum_column
 from app.models.location import Lga
@@ -49,8 +50,10 @@ class Facility(TimestampMixin, Base):
         ),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    lga_id: Mapped[int] = mapped_column(ForeignKey("lgas.id", ondelete="RESTRICT"), index=True)
+    id: Mapped[uuid.UUID] = uuid_primary_key()
+    lga_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("lgas.id", ondelete="RESTRICT"), index=True
+    )
     name: Mapped[str] = mapped_column(String(200))
     facility_type: Mapped[FacilityType] = mapped_column(enum_column(FacilityType))
     address: Mapped[str | None] = mapped_column(Text)
@@ -65,7 +68,7 @@ class Facility(TimestampMixin, Base):
         default=VerificationStatus.UNKNOWN,
         server_default=VerificationStatus.UNKNOWN.value,
     )
-    source_id: Mapped[int | None] = mapped_column(
+    source_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("data_sources.id", ondelete="RESTRICT"), index=True
     )
     last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

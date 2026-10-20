@@ -1,5 +1,6 @@
 """Official, work-related contact persons for facilities (never personal contact details)."""
 
+import uuid
 from datetime import datetime
 
 from sqlalchemy import (
@@ -17,7 +18,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base, TimestampMixin
+from app.models.base import Base, TimestampMixin, uuid_primary_key
 from app.models.catalog import Service
 from app.models.enums import VerificationStatus, enum_check, enum_column
 from app.models.facility import Facility
@@ -61,9 +62,9 @@ class FacilityContact(TimestampMixin, Base):
         ),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.id", ondelete="RESTRICT"))
-    service_id: Mapped[int | None] = mapped_column(
+    id: Mapped[uuid.UUID] = uuid_primary_key()
+    facility_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("facilities.id", ondelete="RESTRICT"))
+    service_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("services.id", ondelete="RESTRICT"), index=True
     )
 
@@ -83,7 +84,7 @@ class FacilityContact(TimestampMixin, Base):
         default=VerificationStatus.UNKNOWN,
         server_default=VerificationStatus.UNKNOWN.value,
     )
-    source_id: Mapped[int | None] = mapped_column(
+    source_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("data_sources.id", ondelete="RESTRICT"), index=True
     )
     last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

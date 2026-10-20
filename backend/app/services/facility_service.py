@@ -4,6 +4,7 @@ All facts come from the database. Nothing here guesses: unknown stays unknown, a
 contact is None, and results are never ordered by distance (we don't know where the user is).
 """
 
+import uuid
 from collections.abc import Iterable
 
 from sqlalchemy import select
@@ -33,7 +34,7 @@ class UnknownServiceError(FacilitySearchError):
 
 
 class UnknownLgaError(FacilitySearchError):
-    def __init__(self, lga_id: int) -> None:
+    def __init__(self, lga_id: uuid.UUID) -> None:
         super().__init__(f"Unknown LGA id: {lga_id}")
         self.lga_id = lga_id
 
@@ -67,7 +68,7 @@ def result_sort_key(match: FacilityMatch) -> tuple[int, int, str]:
 
 
 def select_contact(
-    contacts: Iterable[FacilityContact], service_id: int
+    contacts: Iterable[FacilityContact], service_id: uuid.UUID
 ) -> tuple[FacilityContact | None, int]:
     """Pick the best contact for this service, and count the other relevant contacts.
 
@@ -87,7 +88,9 @@ def select_contact(
             c.service_id is None,  # False (specific) sorts before True (general)
             not c.is_primary,  # False (primary) sorts before True
             c.display_order or 0,
-            c.id or 0,
+            # As text, so unsaved contacts (id None) can be compared with saved ones.
+            # UUIDv7 text sorts by creation time, so the oldest contact wins a full tie.
+            str(c.id or ""),
         )
     )
     return relevant[0], len(relevant) - 1
@@ -132,7 +135,9 @@ def _to_match(offering: FacilityService) -> FacilityMatch:
 # ---------------------------------------------------------------- the search
 
 
-def search_facilities(session: Session, service_code: str, lga_id: int) -> FacilitySearchResult:
+def search_facilities(
+    session: Session, service_code: str, lga_id: uuid.UUID
+) -> FacilitySearchResult:
     """Find active facilities in an LGA that list a service, best matches first.
 
     Raises UnknownServiceError / UnknownLgaError if the inputs don't exist, so callers can

@@ -1,11 +1,12 @@
 """Append-only log of verification events: who confirmed what, when, and what changed."""
 
+import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base
+from app.models.base import Base, uuid_primary_key
 from app.models.enums import EntityType, enum_check, enum_column
 
 
@@ -21,18 +22,18 @@ class VerificationHistory(Base):
 
     __tablename__ = "verification_history"
     __table_args__ = (
-        # "Show the history of contact #12" is the main lookup.
+        # "Show the history of this contact" is the main lookup.
         Index("ix_verification_history_entity", "entity_type", "entity_id"),
         enum_check("entity_type", EntityType),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = uuid_primary_key()
     # Every event belongs to one facility, so an admin can see a facility's full history.
-    facility_id: Mapped[int] = mapped_column(
+    facility_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("facilities.id", ondelete="RESTRICT"), index=True
     )
     entity_type: Mapped[EntityType] = mapped_column(enum_column(EntityType))
-    entity_id: Mapped[int]
+    entity_id: Mapped[uuid.UUID]
     field_name: Mapped[str | None] = mapped_column(String(100))  # e.g. "verification_status"
     old_value: Mapped[str | None] = mapped_column(Text)  # e.g. "unknown"
     new_value: Mapped[str | None] = mapped_column(Text)  # e.g. "verified"

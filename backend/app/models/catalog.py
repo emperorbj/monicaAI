@@ -1,11 +1,12 @@
 """Reference data that other records point to: canonical services and data sources."""
 
+import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base, TimestampMixin
+from app.models.base import Base, TimestampMixin, uuid_primary_key
 from app.models.enums import SourceType, enum_check, enum_column
 
 
@@ -15,7 +16,7 @@ class Service(TimestampMixin, Base):
 
     __tablename__ = "services"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = uuid_primary_key()
     # Stable machine name used by the API and the bot, e.g. "antenatal_care". Never shown to users.
     code: Mapped[str] = mapped_column(String(50), unique=True)
     name: Mapped[str] = mapped_column(String(100))  # human-readable, e.g. "Antenatal care"
@@ -31,7 +32,7 @@ class DataSource(TimestampMixin, Base):
     __tablename__ = "data_sources"
     __table_args__ = (enum_check("source_type", SourceType),)
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = uuid_primary_key()
     name: Mapped[str] = mapped_column(String(200), unique=True)
     source_type: Mapped[SourceType] = mapped_column(enum_column(SourceType))
     source_url: Mapped[str | None] = mapped_column(String(500))

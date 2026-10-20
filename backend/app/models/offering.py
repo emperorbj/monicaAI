@@ -1,5 +1,6 @@
 """What each facility offers (facility_services) and when (service_schedules)."""
 
+import uuid
 from datetime import datetime, time
 
 from sqlalchemy import (
@@ -14,7 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base, TimestampMixin
+from app.models.base import Base, TimestampMixin, uuid_primary_key
 from app.models.catalog import Service
 from app.models.enums import AvailabilityStatus, VerificationStatus, enum_check, enum_column
 from app.models.facility import Facility
@@ -35,10 +36,10 @@ class FacilityService(TimestampMixin, Base):
         ),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.id", ondelete="RESTRICT"))
+    id: Mapped[uuid.UUID] = uuid_primary_key()
+    facility_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("facilities.id", ondelete="RESTRICT"))
     # Own index: the main search is "facilities offering service Y", which filters on service_id.
-    service_id: Mapped[int] = mapped_column(
+    service_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("services.id", ondelete="RESTRICT"), index=True
     )
 
@@ -53,7 +54,7 @@ class FacilityService(TimestampMixin, Base):
         default=VerificationStatus.UNKNOWN,
         server_default=VerificationStatus.UNKNOWN.value,
     )
-    source_id: Mapped[int | None] = mapped_column(
+    source_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("data_sources.id", ondelete="RESTRICT"), index=True
     )
     last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -96,9 +97,9 @@ class ServiceSchedule(TimestampMixin, Base):
         ),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.id", ondelete="RESTRICT"))
-    service_id: Mapped[int | None] = mapped_column(
+    id: Mapped[uuid.UUID] = uuid_primary_key()
+    facility_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("facilities.id", ondelete="RESTRICT"))
+    service_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("services.id", ondelete="RESTRICT"), index=True
     )
     day_of_week: Mapped[int] = mapped_column(SmallInteger)
@@ -111,7 +112,7 @@ class ServiceSchedule(TimestampMixin, Base):
         default=VerificationStatus.UNKNOWN,
         server_default=VerificationStatus.UNKNOWN.value,
     )
-    source_id: Mapped[int | None] = mapped_column(
+    source_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("data_sources.id", ondelete="RESTRICT"), index=True
     )
     last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
