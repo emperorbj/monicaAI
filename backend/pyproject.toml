@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Backend for the AI Health Service Navigator Nigeria (FastAPI, LangGraph, NeonDB)"
 requires-python = ">=3.13"
 dependencies = [
+    "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.16.0",
+    "sqlalchemy>=2.1.5",
 ]
 
 [dependency-groups]
@@ -28,3 +30,6 @@ select = ["E", "F", "I", "B", "UP"]
 testpaths = ["tests"]
 # Lets tests write `from app.config import ...` without installing the project as a package
 pythonpath = ["."]
+markers = [
+    "integration: talks to the real NeonDB (deselect with: -m 'not integration')",
+]
