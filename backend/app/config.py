@@ -34,6 +34,16 @@ class Settings(BaseSettings):
     # SecretStr hides the value (which contains the password) when printed or logged.
     database_url: SecretStr
 
+    # Direct (non-pooled) connection for schema migrations. Neon's pooler can break migrations,
+    # so Alembic uses this when set. Optional: plain local PostgreSQL has no pooler.
+    database_url_unpooled: SecretStr | None = None
+
+    @property
+    def migration_database_url(self) -> str:
+        """The URL Alembic should use: the direct one if configured, otherwise the normal one."""
+        chosen = self.database_url_unpooled or self.database_url
+        return chosen.get_secret_value()
+
 
 @lru_cache
 def get_settings() -> Settings:
